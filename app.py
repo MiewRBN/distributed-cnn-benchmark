@@ -423,8 +423,7 @@ with tab1:
         except Exception as e:
             st.error(f"❌ File gambar tidak valid atau rusak. Error: {e}")
 
-# ============ TAB 2: ANALISIS ============
-# ============ TAB 2: ANALISIS (PERBAIKAN WARNA METRIC) ============
+# ============ TAB 2: ANALISIS (PERBAIKAN ISI SESUAI GAMBAR) ============
 with tab2:
     # --- CSS KHUSUS UNTUK MEMPERJELAS METRIC ---
     st.markdown("""
@@ -457,6 +456,7 @@ with tab2:
     [data-testid="stMetricDelta"] {
         font-size: 0.9rem !important;
         font-weight: 600 !important;
+        color: #333333 !important;
     }
     
     /* Warna khusus untuk Delta Positif/Negatif */
@@ -472,7 +472,7 @@ with tab2:
     
     # Grafik Speedup
     if os.path.exists('grafik_speedup.png'):
-        st.markdown("#### 📈 Perbandingan Performa Training")
+        st.markdown("#### 📈 Perbandingan Performa Training (Single GPU)")
         st.image("grafik_speedup.png", use_container_width=True)
         
         st.markdown("<br>", unsafe_allow_html=True)
@@ -484,46 +484,47 @@ with tab2:
             st.info("""
             **📊 Grafik Kiri: Akurasi Model**
             
-            * **Training Accuracy (Biru):** Seberapa baik model menghafal data.
-            * **Validation Accuracy (Oranye):** Seberapa baik model pada data baru.
-            * **Hasil:** Model mencapai **~99% accuracy** tanpa overfitting signifikan.
+            * **Training Accuracy (Biru):** Sangat stabil mencapai **100%**.
+            * **Validation Accuracy (Oranye):** Mencapai **~99%**.
+            * **Hasil:** Model sangat akurat (High Performance) berkat transfer learning MobileNetV2.
             """)
         
         with col_g2:
-            st.success("""
-            **⚡ Grafik Kanan: Waktu Eksekusi**
+            st.warning("""
+            **⚡ Grafik Kanan: Waktu Eksekusi (5 Epoch)**
             
-            * **Single Node (1 GPU):** 75.9 detik (5 epoch)
-            * **Distributed (Multi-Replica):** 119.4 detik (5 epoch)
-            * **Speedup Ratio:** ~0.64x (Lebih Lambat)
+            * **Single Node (Baseline):** 99.19 detik
+            * **Distributed (Single GPU):** 121.98 detik
+            * **Speedup Ratio:** 0.81x (Negative Speedup)
             """)
         
         st.divider()
         
         # --- ANALISIS MENDALAM ---
-        st.subheader("🔍 Analisis Ilmiah: Mengapa Distributed Lebih Lambat?")
+        st.subheader("🔍 Analisis Ilmiah: Fenomena Negative Speedup")
         
         st.markdown("""
-        Eksperimen menunjukkan **Distributed Training 0.5x lebih lambat** dibandingkan Single Node. 
-        Ini adalah fenomena **Negative Speedup**. Berikut penyebab utamanya:
+        Hasil eksperimen menunjukkan **Distributed Training lebih lambat (0.81x)** dibandingkan Single Node. 
+        Ini adalah hasil yang **valid secara ilmiah** karena kondisi hardware yang digunakan.
         """)
 
         col_a1, col_a2 = st.columns(2)
 
         with col_a1:
-            st.warning("⚠️ **1. Overhead Komunikasi (Communication Overhead)**")
+            st.error("⚠️ **1. Limitasi Hardware (Single GPU)**")
             st.markdown("""
-            Dalam sistem terdistribusi, setiap node (GPU) harus saling **bertukar informasi gradient** (sinkronisasi) di setiap langkah.
-            * **Network Latency:** Mengirim data antar-replika butuh waktu.
-            * **Kasus Ini:** Waktu kirim data > Waktu hitung matematika.
+            Google Colab Free hanya menyediakan **1 unit GPU Tesla T4**.
+            * **Distributed Requirement:** Strategi `MirroredStrategy` dirancang untuk membagi beban ke **minimal 2 device**.
+            * **Efek:** Tidak terjadi pembagian tugas paralel secara fisik karena hanya ada 1 worker.
             """)
 
         with col_a2:
-            st.error("📦 **2. Dataset & Model Terlalu Kecil**")
+            st.warning("📉 **2. Overhead Strategi (Administration Cost)**")
             st.markdown("""
-            Dataset RPS (~2000 gambar) dan MobileNetV2 tergolong sangat ringan.
-            * **GPU Idle:** GPU menghabiskan banyak waktu "menunggu" data datang daripada "bekerja".
-            * **Low Utilization:** Membagi tugas kecil ke banyak pekerja justru membuat ribet.
+            Ketika kode distributed dijalankan di 1 GPU:
+            * Sistem tetap menjalankan protokol **sinkronisasi & replikasi variabel**.
+            * Hal ini menambah beban **'Overhead'** tanpa memberikan keuntungan kecepatan komputasi.
+            * Akibatnya: Waktu total = Waktu Komputasi + Waktu Admin (Overhead).
             """)
 
         st.markdown("<br>", unsafe_allow_html=True)
@@ -535,38 +536,36 @@ with tab2:
         with st.container():
             k1, k2, k3 = st.columns(3)
             
-            # Kita gunakan custom HTML card sebagai pengganti st.metric standar yang samar
-            # Ini DIJAMIN JELAS warnanya
+            # Custom HTML cards
             k1.markdown("""
                 <div style="background-color: #e3f2fd; padding: 15px; border-radius: 10px; border-left: 5px solid #2196f3; text-align: center;">
-                    <p style="margin:0; font-size: 0.9rem; color: #555;">Metode</p>
-                    <h3 style="margin:0; color: #1565c0;">MirroredStrategy</h3>
-                    <p style="margin:0; font-size: 0.8rem; color: #333; font-weight: bold;">✅ Data Parallelism</p>
+                    <p style="margin:0; font-size: 0.9rem; color: #555;">Arsitektur Kode</p>
+                    <h3 style="margin:0; color: #1565c0;">Valid</h3>
+                    <p style="margin:0; font-size: 0.8rem; color: #333; font-weight: bold;">✅ Data Parallelism Ready</p>
                 </div>
             """, unsafe_allow_html=True)
 
             k2.markdown("""
                 <div style="background-color: #e8f5e9; padding: 15px; border-radius: 10px; border-left: 5px solid #4caf50; text-align: center;">
-                    <p style="margin:0; font-size: 0.9rem; color: #555;">Akurasi Final</p>
-                    <h3 style="margin:0; color: #2e7d32;">99.4%</h3>
-                    <p style="margin:0; font-size: 0.8rem; color: #333; font-weight: bold;">📈 High Accuracy</p>
+                    <p style="margin:0; font-size: 0.9rem; color: #555;">Akurasi Validasi</p>
+                    <h3 style="margin:0; color: #2e7d32;">98.8%</h3>
+                    <p style="margin:0; font-size: 0.8rem; color: #333; font-weight: bold;">📈 Model Cerdas</p>
                 </div>
             """, unsafe_allow_html=True)
 
             k3.markdown("""
-                <div style="background-color: #ffebee; padding: 15px; border-radius: 10px; border-left: 5px solid #f44336; text-align: center;">
+                <div style="background-color: #fff3e0; padding: 15px; border-radius: 10px; border-left: 5px solid #ff9800; text-align: center;">
                     <p style="margin:0; font-size: 0.9rem; color: #555;">Speedup Ratio</p>
-                    <h3 style="margin:0; color: #c62828;">0.64x</h3>
-                    <p style="margin:0; font-size: 0.8rem; color: #333; font-weight: bold;">📉 Negative Speedup</p>
+                    <h3 style="margin:0; color: #e65100;">0.81x</h3>
+                    <p style="margin:0; font-size: 0.8rem; color: #333; font-weight: bold;">⚠️ Hardware Limit (1 GPU)</p>
                 </div>
             """, unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
         st.markdown("""
-        * **Keberhasilan Sistem:** Secara fungsional, sistem berhasil mengimplementasikan `TensorFlow MirroredStrategy`.
-        * **Kualitas Model:** Model yang dihasilkan sangat cerdas dan akurat.
-        * **Pelajaran Penting:** Distributed Computing memiliki *trade-off*. Tidak semua masalah butuh distributed system. Untuk data kecil, Single Node justru lebih efisien.
+        * **Validasi Sistem:** Kode telah berhasil mengimplementasikan `tf.distribute.MirroredStrategy`.
+        * **Rekomendasi:** Untuk mendapatkan *Positive Speedup* (Linear Scaling), sistem ini harus dijalankan pada environment dengan **Multi-GPU** atau **TPU**.
         """)
 
     else:
@@ -592,7 +591,7 @@ with tab3:
                     <li><b>Optimizer:</b> Adam</li>
                     <li><b>Hidden Layer:</b> 512 Dense Units + Dropout 0.4</li>
                     <li><b>Training Platform:</b> Google Colab</li>
-                    <li><b>Accelerator:</b> NVIDIA Tesla T4 GPU</li>
+                    <li><b>Accelerator:</b> NVIDIA Tesla T4 GPU (1 Unit)</li>
                 </ul>
             </div>
         """, unsafe_allow_html=True)
@@ -605,7 +604,7 @@ with tab3:
                     <li><b>Metode:</b> Data Parallelism</li>
                     <li><b>Strategy:</b> TensorFlow MirroredStrategy</li>
                     <li><b>Distribusi:</b> Synchronous All-Reduce</li>
-                    <li><b>Worker:</b> Multi-GPU Support</li>
+                    <li><b>Worker:</b> Single Host, Multi-Device Ready</li>
                     <li><b>Sinkronisasi:</b> Gradient Averaging</li>
                     <li><b>Komunikasi:</b> NCCL (GPU) / GRPC (CPU)</li>
                 </ul>
