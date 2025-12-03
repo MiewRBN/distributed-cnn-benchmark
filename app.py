@@ -270,23 +270,38 @@ tab1, tab2, tab3 = st.tabs(["🎯 Demo Prediksi", "📊 Analisis Performansi", "
 # ============ TAB 1: DEMO ============
 with tab1:
     st.markdown("### 🎯 Klasifikasi Citra Real-Time")
-    st.markdown("Upload gambar tangan dengan pose **Batu**, **Gunting**, atau **Kertas** untuk mendapatkan prediksi dari model.")
+    st.markdown("Ambil foto atau upload gambar tangan dengan pose **Batu**, **Gunting**, atau **Kertas**.")
     
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Upload Section
-    col_upload1, col_upload2, col_upload3 = st.columns([1, 2, 1])
-    with col_upload2:
-        file = st.file_uploader(
-            "📤 Pilih Gambar",
-            type=["jpg", "png", "jpeg"],
-            help="Format yang didukung: JPG, PNG, JPEG"
-        )
+    # Opsi Input: Upload atau Kamera
+    input_option = st.radio("Pilih Metode Input:", ("📤 Upload Gambar", "📸 Ambil Foto (Kamera)"), horizontal=True)
     
-    if file is not None:
-        try:
+    image = None
+    
+    if input_option == "📤 Upload Gambar":
+        # Upload Section
+        col_upload1, col_upload2, col_upload3 = st.columns([1, 2, 1])
+        with col_upload2:
+            file = st.file_uploader(
+                "Pilih File Gambar",
+                type=["jpg", "png", "jpeg"],
+                help="Format yang didukung: JPG, PNG, JPEG",
+                label_visibility="collapsed"
+            )
+        if file is not None:
             image = Image.open(file)
             
+    elif input_option == "📸 Ambil Foto (Kamera)":
+        col_cam1, col_cam2, col_cam3 = st.columns([1, 2, 1])
+        with col_cam2:
+            camera_file = st.camera_input("Ambil Foto Tangan Anda")
+        if camera_file is not None:
+            image = Image.open(camera_file)
+    
+    # JIKA ADA GAMBAR (DARI UPLOAD ATAU KAMERA), PROSES DILANJUTKAN
+    if image is not None:
+        try:
             st.markdown("<br>", unsafe_allow_html=True)
             
             # Layout dengan proporsi lebih baik
@@ -316,7 +331,7 @@ with tab1:
                     </style>
                 """, unsafe_allow_html=True)
                 
-                st.image(image, use_container_width=True, caption="Gambar yang diupload")
+                st.image(image, use_container_width=True, caption="Gambar Input")
             
             with col2:
                 st.markdown("""
@@ -631,7 +646,7 @@ st.markdown("<br><br>", unsafe_allow_html=True)
 st.markdown("""
     <div class="footer">
         <p><b>UAS Komputasi Paralel dan Terdistribusi</b></p>
-        <p>Dibuat oleh abi dan teman teman menggunakan Streamlit & TensorFlow</p>
-        <p style='font-size: 0.8rem; color: #999;'>© 2025 | Parallel Deep Learning System</p>
+        <p>Dibuat dengan teman teman yakan menggunakan Streamlit & TensorFlow</p>
+        <p style='font-size: 0.8rem; color: #999;'>© 2024 | Parallel Deep Learning System</p>
     </div>
 """, unsafe_allow_html=True)
