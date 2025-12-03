@@ -438,153 +438,132 @@ with tab1:
         except Exception as e:
             st.error(f"❌ File gambar tidak valid atau rusak. Error: {e}")
 
-# ============ TAB 2: ANALISIS (PERBAIKAN ISI SESUAI GAMBAR) ============
+# ============ TAB 2: ANALISIS PERFORMANSI ============
 with tab2:
     # --- CSS KHUSUS UNTUK MEMPERJELAS METRIC ---
     st.markdown("""
     <style>
-    /* Styling khusus untuk box metric agar tidak samar */
     [data-testid="stMetric"] {
-        background-color: #f8f9fa; /* Latar belakang putih abu terang */
+        background-color: #f8f9fa;
         padding: 15px;
         border-radius: 10px;
         border: 1px solid #e0e0e0;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        color: #333333; /* Warna teks utama gelap */
+        color: #333333;
     }
-    
-    /* Label Metric (Judul kecil di atas angka) */
     [data-testid="stMetricLabel"] {
         font-size: 1rem !important;
         font-weight: 600 !important;
-        color: #555555 !important; /* Abu tua jelas */
+        color: #555555 !important;
     }
-    
-    /* Value Metric (Angka besar) */
     [data-testid="stMetricValue"] {
         font-size: 1.8rem !important;
         font-weight: 700 !important;
-        color: #2c3e50 !important; /* Biru gelap */
-    }
-
-    /* Delta Metric (Tulisan kecil di bawah angka) */
-    [data-testid="stMetricDelta"] {
-        font-size: 0.9rem !important;
-        font-weight: 600 !important;
-        color: #333333 !important;
-    }
-    
-    /* Warna khusus untuk Delta Positif/Negatif */
-    [data-testid="stMetricDelta"] svg {
-        fill: currentColor;
+        color: #2c3e50 !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("### 📊 Laporan Analisis Komputasi Paralel")
+    st.markdown("### 📊 Laporan Analisis: Akurasi, Loss & Speedup")
     
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Grafik Speedup
-    if os.path.exists('grafik_speedup.png'):
-        st.markdown("#### 📈 Perbandingan Performa Training (Single GPU)")
-        st.image("grafik_speedup.png", use_container_width=True)
+    # Cek keberadaan file grafik baru
+    if os.path.exists('grafik_analisis_lengkap.png'):
+        st.markdown("#### 📈 Visualisasi Hasil Training (3 Node Distributed)")
+        st.image("grafik_analisis_lengkap.png", use_container_width=True, caption="Grafik Performa Lengkap: Akurasi, Loss, dan Waktu Eksekusi")
         
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Penjelasan Grafik (2 Kolom)
-        col_g1, col_g2 = st.columns(2)
+        # Penjelasan Grafik (3 Kolom untuk 3 Grafik)
+        g1, g2, g3 = st.columns(3)
         
-        with col_g1:
+        with g1:
             st.info("""
-            **📊 Grafik Kiri: Akurasi Model**
-            
-            * **Training Accuracy (Biru):** Sangat stabil mencapai **100%**.
-            * **Validation Accuracy (Oranye):** Mencapai **~99%**.
-            * **Hasil:** Model sangat akurat (High Performance) berkat transfer learning MobileNetV2.
+            **1. Grafik Akurasi (Kiri)**
+            * **Fungsi:** Mengukur kepintaran model.
+            * **Analisis:** Garis menanjak tajam mendekati 1.0 (100%).
+            * **Kesimpulan:** Model sangat akurat membedakan Batu, Gunting, Kertas.
             """)
         
-        with col_g2:
+        with g2:
+            st.success("""
+            **2. Grafik Loss (Tengah)**
+            * **Fungsi:** Mengukur tingkat kesalahan (Error).
+            * **Analisis:** Garis menurun drastis mendekati 0.
+            * **Penting:** Kurva Loss yang turun membuktikan model 'Belajar' dan tidak sekadar menebak.
+            """)
+
+        with g3:
             st.warning("""
-            **⚡ Grafik Kanan: Waktu Eksekusi (5 Epoch)**
-            
-            * **Single Node (Baseline):** 99.19 detik
-            * **Distributed (Single GPU):** 121.98 detik
-            * **Speedup Ratio:** 0.81x (Negative Speedup)
+            **3. Grafik Waktu (Kanan)**
+            * **Fungsi:** Membandingkan kecepatan training.
+            * **Hasil:** Distributed (3 Node) lebih lambat dari Single Node.
+            * **Status:** Negative Speedup (Wajar untuk simulasi Virtual GPU).
             """)
         
         st.divider()
         
         # --- ANALISIS MENDALAM ---
-        st.subheader("🔍 Analisis Ilmiah: Fenomena Negative Speedup")
+        st.subheader("🔍 Analisis Ilmiah: Mengapa Distributed Lebih Lambat?")
         
         st.markdown("""
-        Hasil eksperimen menunjukkan **Distributed Training lebih lambat (0.81x)** dibandingkan Single Node. 
-        Ini adalah hasil yang **valid secara ilmiah** karena kondisi hardware yang digunakan.
+        Meskipun menggunakan strategi **Distributed Training (3 Node)**, hasil waktu eksekusi menunjukkan perlambatan (*Negative Speedup*). 
+        Ini adalah fenomena yang valid secara teknis dengan alasan berikut:
         """)
 
         col_a1, col_a2 = st.columns(2)
 
         with col_a1:
-            st.error("⚠️ **1. Limitasi Hardware (Single GPU)**")
+            st.error("⚠️ **1. Simulasi Virtual Device**")
             st.markdown("""
-            Google Colab Free hanya menyediakan **1 unit GPU Tesla T4**.
-            * **Distributed Requirement:** Strategi `MirroredStrategy` dirancang untuk membagi beban ke **minimal 2 device**.
-            * **Efek:** Tidak terjadi pembagian tugas paralel secara fisik karena hanya ada 1 worker.
+            Sistem ini menggunakan **3 Logical GPU** yang berjalan di atas **1 Fisik GPU (Tesla T4)**.
+            * **Dampaknya:** Tidak ada penambahan kekuatan komputasi nyata. Satu GPU dipaksa bekerja 3x lipat seolah-olah dia adalah 3 orang berbeda.
             """)
 
         with col_a2:
-            st.warning("📉 **2. Overhead Strategi (Administration Cost)**")
+            st.warning("📉 **2. Overhead Komunikasi**")
             st.markdown("""
-            Ketika kode distributed dijalankan di 1 GPU:
-            * Sistem tetap menjalankan protokol **sinkronisasi & replikasi variabel**.
-            * Hal ini menambah beban **'Overhead'** tanpa memberikan keuntungan kecepatan komputasi.
-            * Akibatnya: Waktu total = Waktu Komputasi + Waktu Admin (Overhead).
+            Strategi `MirroredStrategy` mewajibkan sinkronisasi data antar node setiap *step*.
+            * Karena node-nya virtual dalam satu chip, proses membagi data dan menggabungkan gradient justru memakan waktu tambahan (**Overhead**) dibanding jalan langsung di Single Node.
             """)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # --- KESIMPULAN UTAMA (DENGAN WARNA KONTRAS) ---
-        st.subheader("📝 Kesimpulan Utama Eksperimen")
+        # --- KESIMPULAN UTAMA ---
+        st.subheader("📝 Kesimpulan Akhir Project")
         
-        # KITA GUNAKAN CONTAINER BACKGROUND PUTIH AGAR KONTRAS
+        # Container background putih agar kontras
         with st.container():
             k1, k2, k3 = st.columns(3)
             
-            # Custom HTML cards
             k1.markdown("""
                 <div style="background-color: #e3f2fd; padding: 15px; border-radius: 10px; border-left: 5px solid #2196f3; text-align: center;">
-                    <p style="margin:0; font-size: 0.9rem; color: #555;">Arsitektur Kode</p>
-                    <h3 style="margin:0; color: #1565c0;">Valid</h3>
-                    <p style="margin:0; font-size: 0.8rem; color: #333; font-weight: bold;">✅ Data Parallelism Ready</p>
+                    <p style="margin:0; font-size: 0.9rem; color: #555;">Status Arsitektur</p>
+                    <h3 style="margin:0; color: #1565c0;">Berhasil</h3>
+                    <p style="margin:0; font-size: 0.8rem; color: #333; font-weight: bold;">✅ 3 Node Terdistribusi</p>
                 </div>
             """, unsafe_allow_html=True)
 
             k2.markdown("""
                 <div style="background-color: #e8f5e9; padding: 15px; border-radius: 10px; border-left: 5px solid #4caf50; text-align: center;">
-                    <p style="margin:0; font-size: 0.9rem; color: #555;">Akurasi Validasi</p>
-                    <h3 style="margin:0; color: #2e7d32;">98.8%</h3>
-                    <p style="margin:0; font-size: 0.8rem; color: #333; font-weight: bold;">📈 Model Cerdas</p>
+                    <p style="margin:0; font-size: 0.9rem; color: #555;">Kualitas Model</p>
+                    <h3 style="margin:0; color: #2e7d32;">Sangat Baik</h3>
+                    <p style="margin:0; font-size: 0.8rem; color: #333; font-weight: bold;">📈 Akurasi Tinggi & Stabil</p>
                 </div>
             """, unsafe_allow_html=True)
 
             k3.markdown("""
                 <div style="background-color: #fff3e0; padding: 15px; border-radius: 10px; border-left: 5px solid #ff9800; text-align: center;">
-                    <p style="margin:0; font-size: 0.9rem; color: #555;">Speedup Ratio</p>
-                    <h3 style="margin:0; color: #e65100;">0.81x</h3>
-                    <p style="margin:0; font-size: 0.8rem; color: #333; font-weight: bold;">⚠️ Hardware Limit (1 GPU)</p>
+                    <p style="margin:0; font-size: 0.9rem; color: #555;">Performa Waktu</p>
+                    <h3 style="margin:0; color: #e65100;">Overhead</h3>
+                    <p style="margin:0; font-size: 0.8rem; color: #333; font-weight: bold;">⚠️ Batasan Hardware Fisik</p>
                 </div>
             """, unsafe_allow_html=True)
 
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        st.markdown("""
-        * **Validasi Sistem:** Kode telah berhasil mengimplementasikan `tf.distribute.MirroredStrategy`.
-        * **Rekomendasi:** Untuk mendapatkan *Positive Speedup* (Linear Scaling), sistem ini harus dijalankan pada environment dengan **Multi-GPU** atau **TPU**.
-        """)
-
     else:
-        st.warning("⚠️ File grafik `grafik_speedup.png` tidak ditemukan. Harap upload file grafik ke folder ini.")
+        st.error("❌ **File Grafik Tidak Ditemukan!**")
+        st.warning("⚠️ Harap upload file `grafik_analisis_lengkap.png` yang dihasilkan dari Google Colab ke folder yang sama dengan `app.py`.")
 
 # ============ TAB 3: INFO SISTEM ============
 with tab3:
@@ -646,7 +625,7 @@ st.markdown("<br><br>", unsafe_allow_html=True)
 st.markdown("""
     <div class="footer">
         <p><b>UAS Komputasi Paralel dan Terdistribusi</b></p>
-        <p>Dibuat dengan modal yakin bersama teman teman hehe menggunakan Streamlit & TensorFlow</p>
+        <p>Dibuat dengan teman teman yakan menggunakan Streamlit & TensorFlow</p>
         <p style='font-size: 0.8rem; color: #999;'>© 2024 | Parallel Deep Learning System</p>
     </div>
 """, unsafe_allow_html=True)
