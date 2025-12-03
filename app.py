@@ -646,7 +646,7 @@ st.markdown("<br><br>", unsafe_allow_html=True)
 st.markdown("""
     <div class="footer">
         <p><b>UAS Komputasi Paralel dan Terdistribusi</b></p>
-        <p>Dibuat dengan teman teman yakan menggunakan Streamlit & TensorFlow</p>
+        <p>Dibuat dengan modal yakin bersama teman teman hehe menggunakan Streamlit & TensorFlow</p>
         <p style='font-size: 0.8rem; color: #999;'>© 2024 | Parallel Deep Learning System</p>
     </div>
 """, unsafe_allow_html=True)
